@@ -1,9 +1,20 @@
 package firstproject.factoryapplication.repository;
 
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Arrays;
 
+@Getter
+@Setter
+@Entity
+@Table(name = "equipment")
 public class Equipment {
-    private int id;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
     private double[] location;
     private int capacity;
     private String status;
@@ -20,44 +31,8 @@ public class Equipment {
         this.type = type;
     }
 
-    public int getId() {
-        return id;
-    }
-
-    public double[] getLocation() {
-        return location;
-    }
-
-    public int getCapacity() {
-        return capacity;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public String getType() {
-        return type;
-    }
-
     public void setId(int id) {
         this.id = id;
-    }
-
-    public void setLocation(double[] location) {
-        this.location = location;
-    }
-
-    public void setCapacity(int capacity) {
-        this.capacity = capacity;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public void setType(String type) {
-        this.type = type;
     }
 
     @Override
@@ -71,3 +46,4 @@ public class Equipment {
                 '}';
     }
 }
+

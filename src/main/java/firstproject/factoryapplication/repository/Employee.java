@@ -1,63 +1,43 @@
 package firstproject.factoryapplication.repository;
 
-import java.util.Arrays;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
+import java.util.Arrays;
+import java.util.List;
+
+@Setter
+@Getter
+@Entity
+@Table(name = "employee")
 public class Employee {
-    private int id;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
     private String position;
     private double salary;
     private String status;
     private double[] location;
+    @ManyToMany
+    @JoinTable(
+            name = "shift_employee",
+            joinColumns = @JoinColumn(name = "employee_id"),
+            inverseJoinColumns = @JoinColumn(name = "shift_id")
+    )
+    private List<Shift> shifts;
 
     public Employee() {
     }
 
-    public Employee(int id, String position, double salary, String status, double[] location) {
+    public Employee(long id, String position, double salary, String status, double[] location, List<Shift> shifts) {
         this.id = id;
         this.position = position;
         this.salary = salary;
         this.status = status;
         this.location = location;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public String getPosition() {
-        return position;
-    }
-
-    public double getSalary() {
-        return salary;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public double[] getLocation() {
-        return location;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public void setPosition(String position) {
-        this.position = position;
-    }
-
-    public void setSalary(double salary) {
-        this.salary = salary;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public void setLocation(double[] location) {
-        this.location = location;
+        this.shifts = shifts;
     }
 
     @Override
