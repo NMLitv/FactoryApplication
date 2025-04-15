@@ -1,10 +1,10 @@
-package firstproject.factoryapplication.repository;
+package firstproject.factoryapplication.model;
 
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Getter
@@ -17,9 +17,9 @@ public class Task {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-    private int laborCost;
-    private LocalDate startTime;
-    private LocalDate endTime;
+    private String name;
+    private LocalTime startTime;
+    private LocalTime endTime;
 
     @ManyToOne
     @JoinColumn(name = "employee_id")
@@ -33,20 +33,17 @@ public class Task {
     public Task() {
     }
 
-    public Task(int id, int laborCost, LocalDate startTime, LocalDate endTime, Employee employee, String priority) {
+    public Task(int id, LocalTime startTime, LocalTime endTime, Employee employee) {
         this.id = id;
-        this.laborCost = laborCost;
         this.startTime = startTime;
         this.endTime = endTime;
         this.employee = employee;
-        this.priority = priority;
     }
 
     @Override
     public String toString() {
         return "Task{" +
                 "id=" + id +
-                ", laborCost=" + laborCost +
                 ", startTime=" + startTime +
                 ", endTime=" + endTime +
                 ", employee=" + employee +

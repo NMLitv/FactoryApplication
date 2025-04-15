@@ -1,4 +1,4 @@
-package firstproject.factoryapplication.repository;
+package firstproject.factoryapplication.model;
 
 import java.util.List;
 

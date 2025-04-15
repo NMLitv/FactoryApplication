@@ -1,4 +1,4 @@
-package firstproject.factoryapplication.repository;
+package firstproject.factoryapplication.model;
 
 import jakarta.persistence.*;
 import lombok.Getter;
