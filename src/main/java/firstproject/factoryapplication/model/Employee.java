@@ -7,6 +7,7 @@ import lombok.Setter;
 import java.util.Arrays;
 import java.util.List;
 
+
 @Setter
 @Getter
 @Entity
@@ -15,7 +16,7 @@ public class Employee {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
     private String position;
     private double salary;
     private String status;
@@ -31,7 +32,7 @@ public class Employee {
     public Employee() {
     }
 
-    public Employee(long id, String position, double salary, String status, double[] location, List<Shift> shifts) {
+    public Employee(Long id, String position, double salary, String status, double[] location, List<Shift> shifts) {
         this.id = id;
         this.position = position;
         this.salary = salary;

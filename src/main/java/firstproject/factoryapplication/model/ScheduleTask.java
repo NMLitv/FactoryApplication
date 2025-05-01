@@ -6,15 +6,16 @@ import lombok.Setter;
 
 import java.util.List;
 
-@Getter
+
 @Setter
+@Getter
 @Entity
 @Table(name = "scheduled_task")
 public class ScheduleTask {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private long id;
+    private Long id;
 
     @ManyToMany
     @JoinTable(
@@ -30,12 +31,11 @@ public class ScheduleTask {
     public ScheduleTask() {
     }
 
-    public ScheduleTask(long id, List<Task> tasks, Employee employee) {
+    public ScheduleTask(Long id, List<Task> tasks, Employee employee) {
         this.id = id;
         this.tasks = tasks;
         this.employee = employee;
     }
-
 
     @Override
     public String toString() {

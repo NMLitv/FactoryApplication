@@ -30,8 +30,8 @@ public class ShiftController {
         shiftService.create(shift);
     }
 
-    @DeleteMapping("/{shiftId}")
-    public void deleteEmployeeFromShift(Long shiftId){
+    @DeleteMapping()
+    public void deleteEmployeeFromShift(@RequestParam Long shiftId){
         shiftService.delete(shiftId);
     }
 
