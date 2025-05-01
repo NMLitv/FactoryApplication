@@ -13,7 +13,7 @@ import java.util.Locale;
 import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
 
-
+@Service
 public class TaskAssignmentService {
     private final EmployeeRepository employeeRepository;
     private final TaskRepository taskRepository;
