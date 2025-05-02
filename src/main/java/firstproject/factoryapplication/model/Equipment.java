@@ -15,7 +15,9 @@ public class Equipment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
-    private double[] location;
+
+    private Double[] location;
+
     private int capacity;
     private String status;
     private String type;
@@ -23,7 +25,9 @@ public class Equipment {
     public Equipment() {
     }
 
-    public Equipment(int id, double[] location, int capacity, String status, String type) {
+
+    public Equipment(int id, Double[] location, int capacity, String status, String type) {
+
         this.id = id;
         this.location = location;
         this.capacity = capacity;

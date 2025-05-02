@@ -3,6 +3,8 @@ package firstproject.factoryapplication.service;
 import firstproject.factoryapplication.model.Employee;
 import firstproject.factoryapplication.model.ScheduleTask;
 import firstproject.factoryapplication.model.Task;
+
+import firstproject.factoryapplication.repository.EmployeeRepository;
 import firstproject.factoryapplication.repository.ScheduleTaskRepository;
 import firstproject.factoryapplication.repository.TaskRepository;
 import org.springframework.stereotype.Service;
@@ -17,10 +19,13 @@ import java.util.Optional;
 public class TaskService {
     private final TaskRepository taskRepository;
     private final ScheduleTaskRepository scheduleTaskRepository;
+    private final EmployeeRepository employeeRepository;
 
-    public TaskService(TaskRepository taskRepository, ScheduleTaskRepository scheduleTaskRepository) {
+    public TaskService(TaskRepository taskRepository, ScheduleTaskRepository scheduleTaskRepository, EmployeeRepository employeeRepository) {
         this.taskRepository = taskRepository;
         this.scheduleTaskRepository = scheduleTaskRepository;
+        this.employeeRepository = employeeRepository;
+
     }
 
     public Task findById(long id) {
@@ -75,6 +80,19 @@ public class TaskService {
     }
 
 
+    public Task assignTaskToEmployee(Long employeeId, Task task) {
+
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new RuntimeException("Employee not found"));
+        task.setEmployee(employee);
+        ScheduleTask scheduleTask = scheduleTaskRepository.findByEmployeeId(employeeId);
+        scheduleTask.getTasks().add(task);
+
+        return taskRepository.save(task);
+    }
+
+
+
     public void update(Long id, LocalTime startTime, LocalTime endTime, Employee employee) {
         Task task = taskRepository.findById(id);
         if (task == null) {
@@ -112,4 +130,10 @@ public class TaskService {
         newSchedule.setTasks(new ScheduleTaskService(scheduleTaskRepository).sortTasks(newSchedule.getTasks()));
         scheduleTaskRepository.save(newSchedule);
     }
+
+
+    public List<Task> getTasksForEmployee(Long employeeId) {
+        return taskRepository.findByEmployeeId(employeeId);
+    }
+
 }

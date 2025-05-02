@@ -19,7 +19,9 @@ public class Employee {
     private String position;
     private double salary;
     private String status;
-    private double[] location;
+
+    private Double[] location;
+
     @ManyToMany
     @JoinTable(
             name = "shift_employee",
@@ -29,9 +31,13 @@ public class Employee {
     private List<Shift> shifts;
 
     public Employee() {
+
     }
 
-    public Employee(long id, String position, double salary, String status, double[] location, List<Shift> shifts) {
+
+
+    public Employee(long id, String position, double salary, String status, Double[] location, List<Shift> shifts) {
+
         this.id = id;
         this.position = position;
         this.salary = salary;
