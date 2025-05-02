@@ -13,7 +13,7 @@ import java.util.List;
 
 
 @Controller
-@RequestMapping("api/users")
+@RequestMapping("/Employee")
 public class EmployeeController {
     private final EmployeeService employeeService; // Сервис для работы с работниками
     private final TaskService taskService;// Сервис для работы с задачами
@@ -43,4 +43,6 @@ public class EmployeeController {
         List<Task> tasks = taskService.getTasksForEmployee(employeeId);
         return ResponseEntity.ok(tasks);
     }
+
+
 }
