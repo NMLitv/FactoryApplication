@@ -8,8 +8,7 @@ import java.util.List;
 
 @Repository
 public interface EquipmentRepository extends JpaRepository<Equipment, Long> {
-
     List<Equipment> findByStatus(String status);
-
     List<Equipment> findByType(String type);
 }
+

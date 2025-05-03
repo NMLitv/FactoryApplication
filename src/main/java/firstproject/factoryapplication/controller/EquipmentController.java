@@ -60,3 +60,4 @@ public class EquipmentController {
         return equipmentService.findByType(type);
     }
 }
+

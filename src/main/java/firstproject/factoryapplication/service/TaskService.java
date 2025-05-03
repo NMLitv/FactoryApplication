@@ -78,6 +78,19 @@ public class TaskService {
     }
 
 
+    public Task assignTaskToEmployee(Long employeeId, Task task) {
+
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new RuntimeException("Employee not found"));
+        task.setEmployee(employee);
+        ScheduleTask scheduleTask = scheduleTaskRepository.findByEmployeeId(employeeId);
+        scheduleTask.getTasks().add(task);
+
+        return taskRepository.save(task);
+    }
+
+
+
     public void update(Long id, LocalTime startTime, LocalTime endTime, Employee employee) {
         Task task = taskRepository.findById(id);
         if (task == null) {
@@ -135,6 +148,4 @@ public class TaskService {
     public List<Task> getTasksForEmployee(long employeeId){
         return taskRepository.findByEmployeeId(employeeId);
     }
-
-
 }
