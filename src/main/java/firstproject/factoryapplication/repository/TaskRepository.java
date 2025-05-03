@@ -4,7 +4,6 @@ import firstproject.factoryapplication.model.Task;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,15 +12,12 @@ public interface TaskRepository extends JpaRepository<Task, Integer> {
 
     Optional<Task> findByName(String name);
 
-    Task findById(long id);
+    // найти все задачи по id сотрудника
+    List<Task> findByEmployeeId(Long employeeId);
 
-    List<Task> findByPriority(String priority);
+    // удалить задачи по id сотрудника
+    void deleteByEmployeeId(Long employeeId);
 
-    List<Task> findByEmployeeId(long employee_id);
-
-    List<Task> findByStartTimeAndEndTime(LocalTime startTime, LocalTime endTime);
-
-    void deleteById(long id);
-
-    void deleteByEmployeeId(long employee_id);
+    // переопределить, чтобы возвращать Task, а не Optional<Task>
+    Task findById(Long id); // либо оставить Optional<Task>
 }

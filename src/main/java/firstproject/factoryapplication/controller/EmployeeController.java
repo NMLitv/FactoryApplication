@@ -1,20 +1,18 @@
 package firstproject.factoryapplication.controller;
 
-
-
 import firstproject.factoryapplication.model.Employee;
 import firstproject.factoryapplication.model.Task;
 import firstproject.factoryapplication.service.EmployeeService;
 import firstproject.factoryapplication.service.TaskService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+
 
 import java.util.List;
 
 
-@Controller
-@RequestMapping("/Employee")
+@RestController
+@RequestMapping("/employees")
 public class EmployeeController {
     private final EmployeeService employeeService; // Сервис для работы с работниками
     private final TaskService taskService;// Сервис для работы с задачами
@@ -44,7 +42,4 @@ public class EmployeeController {
         List<Task> tasks = taskService.getTasksForEmployee(employeeId);
         return ResponseEntity.ok(tasks);
     }
-
-
-
 }

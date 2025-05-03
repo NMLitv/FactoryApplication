@@ -4,19 +4,20 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+
 import java.time.LocalTime;
 import java.util.List;
 
-@Getter
+
 @Setter
+@Getter
 @Entity
 @Table(name = "task")
 public class Task {
 
-    @Setter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
     private String name;
     private LocalTime startTime;
     private LocalTime endTime;
@@ -24,6 +25,9 @@ public class Task {
     @ManyToOne
     @JoinColumn(name = "employee_id")
     private Employee employee;
+
+    @ManyToOne
+    private Equipment equipment;
 
     private String priority;
 
@@ -33,7 +37,7 @@ public class Task {
     public Task() {
     }
 
-    public Task(int id, LocalTime startTime, LocalTime endTime, Employee employee) {
+    public Task(Long id, LocalTime startTime, LocalTime endTime, Employee employee) {
         this.id = id;
         this.startTime = startTime;
         this.endTime = endTime;

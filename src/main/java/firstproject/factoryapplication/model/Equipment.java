@@ -5,29 +5,30 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Arrays;
+import java.util.List;
 
-@Getter
+
 @Setter
+@Getter
 @Entity
 @Table(name = "equipment")
 public class Equipment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
-
-    private Double[] location;
-
+    private Long id;
+    private double[] location;
     private int capacity;
     private String status;
     private String type;
 
+    @OneToMany(mappedBy = "equipment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Task> tasks;
+
     public Equipment() {
     }
 
-
-    public Equipment(int id, Double[] location, int capacity, String status, String type) {
-
+    public Equipment(Long id, double[] location, int capacity, String status, String type) {
         this.id = id;
         this.location = location;
         this.capacity = capacity;
@@ -35,9 +36,7 @@ public class Equipment {
         this.type = type;
     }
 
-    public void setId(int id) {
-        this.id = id;
-    }
+
 
     @Override
     public String toString() {

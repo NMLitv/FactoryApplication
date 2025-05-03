@@ -5,6 +5,8 @@ import firstproject.factoryapplication.model.ScheduleTask;
 import firstproject.factoryapplication.service.ScheduleTaskService;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/scheduleTask")
 public class ScheduleTaskController {
@@ -15,7 +17,7 @@ public class ScheduleTaskController {
     }
 
     @GetMapping
-    public ScheduleTask findAll(){
+    public List<ScheduleTask> findAll(){
         return scheduleTaskService.findAll();
     }
 

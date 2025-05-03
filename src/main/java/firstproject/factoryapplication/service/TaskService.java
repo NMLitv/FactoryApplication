@@ -3,7 +3,6 @@ package firstproject.factoryapplication.service;
 import firstproject.factoryapplication.model.Employee;
 import firstproject.factoryapplication.model.ScheduleTask;
 import firstproject.factoryapplication.model.Task;
-
 import firstproject.factoryapplication.repository.EmployeeRepository;
 import firstproject.factoryapplication.repository.ScheduleTaskRepository;
 import firstproject.factoryapplication.repository.TaskRepository;
@@ -25,7 +24,6 @@ public class TaskService {
         this.taskRepository = taskRepository;
         this.scheduleTaskRepository = scheduleTaskRepository;
         this.employeeRepository = employeeRepository;
-
     }
 
     public Task findById(long id) {
@@ -54,7 +52,7 @@ public class TaskService {
             throw new IllegalStateException("Task already exists");
         }
 
-        getPriority(task);
+        setPriority(task);
         Task savedTask = taskRepository.save(task);
         ScheduleTask scheduleTask = new ScheduleTask();
         scheduleTask.setTasks(List.of(savedTask));
@@ -66,13 +64,13 @@ public class TaskService {
     }
 
     // установка приоритета задаче
-    private static void getPriority(Task task) {
+    public void setPriority(Task task) {
         Duration duration = Duration.between(task.getStartTime(), task.getEndTime());
         Duration twoHours = Duration.ofHours(2);
         Duration oneHours = Duration.ofHours(1);
         if (duration.compareTo(twoHours) > 0) {
             task.setPriority("High");
-        } else if( duration.compareTo(oneHours) < 0) {
+        } else if (duration.compareTo(oneHours) < 0) {
             task.setPriority("Medium");
         } else {
             task.setPriority("Low");
@@ -101,7 +99,7 @@ public class TaskService {
 
         Employee oldEmployee = task.getEmployee();
         ScheduleTask oldScheduleTask;
-        if (oldEmployee == null) {
+        if (oldEmployee != null) {
             oldScheduleTask = scheduleTaskRepository.findByEmployeeId(oldEmployee.getId());
         } else {
             oldScheduleTask = null;
@@ -116,7 +114,7 @@ public class TaskService {
         task.setStartTime(startTime);
         task.setEndTime(endTime);
         task.setEmployee(employee);
-        getPriority(task);
+        setPriority(task);
         taskRepository.save(task);
 
         // Получаем расписание нового сотрудника
@@ -126,14 +124,28 @@ public class TaskService {
             newSchedule.setEmployee(employee);
             newSchedule.setTasks(new ArrayList<>());
         }
+
+        // Добавляем задачу в новое расписание
         newSchedule.getTasks().add(task);
-        newSchedule.setTasks(new ScheduleTaskService(scheduleTaskRepository).sortTasks(newSchedule.getTasks()));
+
+        // Можно сразу отсортировать по приоритету (опционально)
+        newSchedule.setTasks(new ScheduleTaskService(scheduleTaskRepository, taskRepository, employeeRepository)
+                .sortTasks(newSchedule.getTasks()));
+
+        // Сохраняем новое расписание
         scheduleTaskRepository.save(newSchedule);
     }
 
-
-    public List<Task> getTasksForEmployee(Long employeeId) {
-        return taskRepository.findByEmployeeId(employeeId);
+    public Task assignTaskToEmployee(long employeeId, Task task) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new RuntimeException("Employee not found"));
+        task.setEmployee(employee);
+        ScheduleTask scheduleTask = scheduleTaskRepository.findByEmployeeId(employeeId);
+        scheduleTask.getTasks().add(task);
+        return taskRepository.save(task);
     }
 
+    public List<Task> getTasksForEmployee(long employeeId){
+        return taskRepository.findByEmployeeId(employeeId);
+    }
 }

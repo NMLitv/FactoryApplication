@@ -22,8 +22,8 @@ public class TaskController {
         return taskService.findAll();
     }
 
-    @GetMapping("/employee/{employeeId}")
-    public List<Task> findByEmployeeId(@PathVariable long employeeId) {
+    @GetMapping(params = "employee") //  Spring будет вызывать findByEmployeeId, только если в запросе есть ?employee=....
+    public List<Task> findByEmployeeId(@RequestParam(name = "employee") Long employeeId) {
         return taskService.findByEmployee(employeeId);
     }
 
@@ -42,8 +42,8 @@ public class TaskController {
         taskService.deleteById(id);
     }
 
-    @DeleteMapping("/employee/{employeeId}")
-    public void deleteByEmployeeId(@PathVariable long employeeId) {
+    @DeleteMapping()
+    public void deleteByEmployeeId(@RequestParam(name = "employee") Long employeeId) {
         taskService.deleteByEmployeeId(employeeId);
     }
 
