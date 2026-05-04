@@ -1,88 +1,113 @@
 package firstproject.factoryapplication.service;
 
+import firstproject.factoryapplication.dto.ScheduleTaskDto;
 import firstproject.factoryapplication.model.Employee;
 import firstproject.factoryapplication.model.ScheduleTask;
 import firstproject.factoryapplication.model.Task;
 import firstproject.factoryapplication.repository.EmployeeRepository;
 import firstproject.factoryapplication.repository.ScheduleTaskRepository;
 import firstproject.factoryapplication.repository.TaskRepository;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
+// ===== ScheduleTaskService.java =====
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class ScheduleTaskService {
+
     private final ScheduleTaskRepository scheduleTaskRepository;
     private final TaskRepository taskRepository;
     private final EmployeeRepository employeeRepository;
+    private final TaskService taskService;
 
-    public ScheduleTaskService(ScheduleTaskRepository scheduleTaskRepository, TaskRepository taskRepository, EmployeeRepository employeeRepository) {
-        this.scheduleTaskRepository = scheduleTaskRepository;
-        this.taskRepository = taskRepository;
-        this.employeeRepository = employeeRepository;
-    }
-
+    @Transactional(readOnly = true)
     public List<ScheduleTask> findAll() {
         return scheduleTaskRepository.findAll();
     }
 
-    public ScheduleTask findById(long id) {
-        return scheduleTaskRepository.findById(id);
+    @Transactional(readOnly = true)
+    public ScheduleTask findById(Long id) {
+        return scheduleTaskRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("ScheduleTask not found with id: " + id));
     }
 
-    public void deleteByEmployeeId(long employeeId) {
-        scheduleTaskRepository.findByEmployeeId(employeeId);
+    @Transactional(readOnly = true)
+    public ScheduleTask findByEmployeeId(Long employeeId) {
+        return scheduleTaskRepository.findByEmployeeId(employeeId)
+                .orElseThrow(() -> new EntityNotFoundException("Schedule not found for employee: " + employeeId));
     }
 
-    public void create(ScheduleTask scheduleTask) {
-        scheduleTaskRepository.save(scheduleTask);
-    }
+    @Transactional
+    public ScheduleTask create(ScheduleTaskDto dto) {
+        Employee employee = employeeRepository.findById(dto.getEmployeeId())
+                .orElseThrow(() -> new EntityNotFoundException("Employee not found"));
 
-    public void update(long id, long taskId, long employeeId) {
-        ScheduleTask scheduleTask = scheduleTaskRepository.findById(id);
-        if (scheduleTask == null) {
-            throw new IllegalStateException("ScheduleTask not found");
+        List<Task> tasks = new ArrayList<>();
+        if (dto.getTaskIds() != null) {
+            tasks = new ArrayList<>(taskRepository.findAllById(dto.getTaskIds()));
         }
 
-        Task task = taskRepository.findById(taskId);
-        if (task == null) {
-            throw new IllegalStateException("Task not found");
-        }
+        taskService.sortTasksByPriority(tasks);
 
-        Employee employee = employeeRepository.findEmployeeById(employeeId);
-        if (employee == null) {
-            throw new IllegalStateException("Employee not found");
-        }
+        ScheduleTask schedule = ScheduleTask.builder()
+                .employee(employee)
+                .tasks(tasks)
+                .build();
 
-        // Обновим список задач (например, просто заменим одной задачей)
-        scheduleTask.setTasks(List.of(task));
-        scheduleTask.setEmployee(employee);
-
-        scheduleTaskRepository.save(scheduleTask);
+        log.info("Created ScheduleTask for employee {}", employee.getId());
+        return scheduleTaskRepository.save(schedule);
     }
 
-    // сортировка пузырьком
-    public List<Task> sortTasks(List<Task> taskList) {
-        for (int i = 0; i < taskList.size() - 1; i++) {
-            for (int j = 0; j < taskList.size() - i - 1; j++) {
-                int currentPriority = getPriorityValue(taskList.get(j).getPriority());
-                int nextPriority = getPriorityValue(taskList.get(j + 1).getPriority());
-                if (currentPriority < nextPriority) {
-                    Task temp = taskList.get(j);
-                    taskList.set(j, taskList.get(j + 1));
-                    taskList.set(j + 1, temp);
-                }
-            }
+    @Transactional
+    public ScheduleTask update(Long id, ScheduleTaskDto dto) {
+        ScheduleTask schedule = findById(id);
+
+        if (dto.getEmployeeId() != null) {
+            Employee employee = employeeRepository.findById(dto.getEmployeeId())
+                    .orElseThrow(() -> new EntityNotFoundException("Employee not found"));
+            schedule.setEmployee(employee);
         }
-        return taskList;
+
+        if (dto.getTaskIds() != null) {
+            List<Task> tasks = new ArrayList<>(taskRepository.findAllById(dto.getTaskIds()));
+            taskService.sortTasksByPriority(tasks);
+            schedule.setTasks(tasks);
+        }
+
+        log.info("Updated ScheduleTask with id: {}", id);
+        return scheduleTaskRepository.save(schedule);
     }
 
-    private int getPriorityValue(String priority) {
-        return switch (priority.toUpperCase()) {
-            case "HIGH" -> 3;
-            case "MEDIUM" -> 2;
-            case "LOW" -> 1;
-            default -> 0;
-        };
+    @Transactional
+    public void deleteByEmployeeId(Long employeeId) {
+        scheduleTaskRepository.findByEmployeeId(employeeId).ifPresent(schedule -> {
+            scheduleTaskRepository.delete(schedule);
+            log.info("Deleted schedule for employee {}", employeeId);
+        });
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        if (!scheduleTaskRepository.existsById(id)) {
+            throw new EntityNotFoundException("ScheduleTask not found with id: " + id);
+        }
+        scheduleTaskRepository.deleteById(id);
+        log.info("Deleted ScheduleTask with id: {}", id);
+    }
+
+    /**
+     * Делегирует сортировку в TaskService — единое место логики приоритетов.
+     * Вызывается из TaskService.update() через инжектированный бин.
+     */
+    public List<Task> sortTasks(List<Task> tasks) {
+        taskService.sortTasksByPriority(tasks);
+        return tasks;
     }
 }

@@ -1,59 +1,49 @@
 package firstproject.factoryapplication.controller;
 
-import firstproject.factoryapplication.model.Employee;
+import firstproject.factoryapplication.dto.TaskDto;
+import firstproject.factoryapplication.dto.TaskUpdateRequest;
 import firstproject.factoryapplication.model.Task;
 import firstproject.factoryapplication.service.TaskService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/tasks")
+@RequiredArgsConstructor
 public class TaskController {
+
     private final TaskService taskService;
 
-    public TaskController(TaskService taskService) {
-        this.taskService = taskService;
-    }
-
     @GetMapping
-    public List<Task> getAll() {
-        return taskService.findAll();
-    }
-
-    @GetMapping(params = "employee") //  Spring будет вызывать findByEmployeeId, только если в запросе есть ?employee=....
-    public List<Task> findByEmployeeId(@RequestParam(name = "employee") Long employeeId) {
-        return taskService.findByEmployee(employeeId);
+    public ResponseEntity<List<Task>> getAll() {
+        return ResponseEntity.ok(taskService.findAll());
     }
 
     @GetMapping("/{id}")
-    public Task findById(@PathVariable long id) {
-        return taskService.findById(id);
+    public ResponseEntity<Optional<Task>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(taskService.findById(id));
     }
 
     @PostMapping
-    public void create(@RequestBody Task task) {
-        taskService.create(task);
-    }
-
-    @DeleteMapping("/{id}")
-    public void deleteById(@PathVariable long id) {
-        taskService.deleteById(id);
-    }
-
-    @DeleteMapping()
-    public void deleteByEmployeeId(@RequestParam(name = "employee") Long employeeId) {
-        taskService.deleteByEmployeeId(employeeId);
+    public ResponseEntity<Task> create(@Valid @RequestBody TaskDto dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(taskService.create(dto));
     }
 
     @PutMapping("/{id}")
-    public void update(
-            @PathVariable Long id,
-            @RequestParam LocalTime startTime,
-            @RequestParam LocalTime endTime,
-            @RequestBody Employee employee // можно заменить на employeeId + findById() внутри
-    ) {
-        taskService.update(id, startTime, endTime, employee);
+    public ResponseEntity<Task> update(@PathVariable Long id,
+                                       @Valid @RequestBody TaskUpdateRequest request) {
+        return ResponseEntity.ok(taskService.update(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        taskService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

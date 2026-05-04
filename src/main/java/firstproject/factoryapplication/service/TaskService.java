@@ -1,32 +1,48 @@
 package firstproject.factoryapplication.service;
 
+import firstproject.factoryapplication.dto.TaskDto;
+import firstproject.factoryapplication.dto.TaskUpdateRequest;
 import firstproject.factoryapplication.model.Employee;
+import firstproject.factoryapplication.model.Equipment;
 import firstproject.factoryapplication.model.ScheduleTask;
 import firstproject.factoryapplication.model.Task;
+import firstproject.factoryapplication.model.enums.TaskPriority;
 import firstproject.factoryapplication.repository.EmployeeRepository;
+import firstproject.factoryapplication.repository.EquipmentRepository;
 import firstproject.factoryapplication.repository.ScheduleTaskRepository;
 import firstproject.factoryapplication.repository.TaskRepository;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+// ===== TaskService.java =====
 @Service
 public class TaskService {
+
     private final TaskRepository taskRepository;
     private final ScheduleTaskRepository scheduleTaskRepository;
     private final EmployeeRepository employeeRepository;
+    private final EquipmentRepository equipmentRepository;
+    private final ScheduleTaskService scheduleTaskService;
 
-    public TaskService(TaskRepository taskRepository, ScheduleTaskRepository scheduleTaskRepository, EmployeeRepository employeeRepository) {
+    public TaskService(TaskRepository taskRepository,
+                       ScheduleTaskRepository scheduleTaskRepository,
+                       EmployeeRepository employeeRepository,
+                       EquipmentRepository equipmentRepository,
+                       @Lazy ScheduleTaskService scheduleTaskService) {
         this.taskRepository = taskRepository;
         this.scheduleTaskRepository = scheduleTaskRepository;
         this.employeeRepository = employeeRepository;
+        this.equipmentRepository = equipmentRepository;
+        this.scheduleTaskService = scheduleTaskService;
     }
 
-    public Task findById(long id) {
+    public Optional<Task> findById(long id) {
         return taskRepository.findById(id);
     }
 
@@ -38,114 +54,127 @@ public class TaskService {
         return taskRepository.findByEmployeeId(id);
     }
 
-    public void deleteById(long id) {
-        taskRepository.deleteById((int) id);
-    }
+    @Transactional
+    public Task create(TaskDto dto) {
+        taskRepository.findByName(dto.getName()).ifPresent(t -> {
+            throw new IllegalStateException("Task with name '" + dto.getName() + "' already exists");
+        });
 
-    public void deleteByEmployeeId(long id) {
-        taskRepository.deleteByEmployeeId(id);
-    }
+        Task task = new Task();
+        task.setName(dto.getName());
+        task.setStartTime(dto.getStartTime());
+        task.setEndTime(dto.getEndTime());
 
-    public void create(Task task) {
-        Optional<Task> optionalTask = taskRepository.findByName(task.getName());
-        if (optionalTask.isPresent()) {
-            throw new IllegalStateException("Task already exists");
+        if (dto.getEquipmentId() != null) {
+            Equipment equipment = equipmentRepository.findById(dto.getEquipmentId())
+                    .orElseThrow(() -> new EntityNotFoundException("Equipment not found"));
+            task.setEquipment(equipment);
         }
 
-        setPriority(task);
+        calculatePriority(task); // устанавливаем приоритет
         Task savedTask = taskRepository.save(task);
+
         ScheduleTask scheduleTask = new ScheduleTask();
-        scheduleTask.setTasks(List.of(savedTask));
-        // сохраняем расписание
+        scheduleTask.setTasks(new ArrayList<>(List.of(savedTask)));
         scheduleTaskRepository.save(scheduleTask);
-        // нужно вызвать метод который будет сортировать коллекцию
-        /*List<Task> tasks = taskRepository.findAll();
-        sortTasks(tasks);*/
+
+        return savedTask;
     }
 
-    // установка приоритета задаче
-    public void setPriority(Task task) {
-        Duration duration = Duration.between(task.getStartTime(), task.getEndTime());
-        Duration twoHours = Duration.ofHours(2);
-        Duration oneHours = Duration.ofHours(1);
-        if (duration.compareTo(twoHours) > 0) {
-            task.setPriority("High");
-        } else if (duration.compareTo(oneHours) < 0) {
-            task.setPriority("Medium");
-        } else {
-            task.setPriority("Low");
-        }
-    }
+    @Transactional
+    public Task update(Long id, TaskUpdateRequest request) {
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Task not found with id: " + id));
 
-
-    public Task assignTaskToEmployee(Long employeeId, Task task) {
-
-        Employee employee = employeeRepository.findById(employeeId)
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
-        task.setEmployee(employee);
-        ScheduleTask scheduleTask = scheduleTaskRepository.findByEmployeeId(employeeId);
-        scheduleTask.getTasks().add(task);
-
-        return taskRepository.save(task);
-    }
-
-
-
-    public void update(Long id, LocalTime startTime, LocalTime endTime, Employee employee) {
-        Task task = taskRepository.findById(id);
-        if (task == null) {
-            throw new IllegalStateException("Task not found");
-        }
+        Employee newEmployee = employeeRepository.findById(request.getEmployeeId())
+                .orElseThrow(() -> new EntityNotFoundException("Employee not found with id: " + request.getEmployeeId()));
 
         Employee oldEmployee = task.getEmployee();
-        ScheduleTask oldScheduleTask;
         if (oldEmployee != null) {
-            oldScheduleTask = scheduleTaskRepository.findByEmployeeId(oldEmployee.getId());
-        } else {
-            oldScheduleTask = null;
+            scheduleTaskRepository.findByEmployeeId(oldEmployee.getId()).ifPresent(oldSchedule -> {
+                oldSchedule.getTasks().remove(task);
+                scheduleTaskRepository.save(oldSchedule);
+            });
         }
 
-        // Удаляем задачу из старого расписания, если есть
-        if (oldScheduleTask != null) {
-            oldScheduleTask.getTasks().remove(task);
-            scheduleTaskRepository.save(oldScheduleTask);
-        }
-
-        task.setStartTime(startTime);
-        task.setEndTime(endTime);
-        task.setEmployee(employee);
-        setPriority(task);
+        task.setStartTime(request.getStartTime());
+        task.setEndTime(request.getEndTime());
+        task.setEmployee(newEmployee);
+        calculatePriority(task);
         taskRepository.save(task);
 
-        // Получаем расписание нового сотрудника
-        ScheduleTask newSchedule = scheduleTaskRepository.findByEmployeeId(employee.getId());
-        if (newSchedule == null) {
-            newSchedule = new ScheduleTask();
-            newSchedule.setEmployee(employee);
-            newSchedule.setTasks(new ArrayList<>());
-        }
+        ScheduleTask newSchedule = scheduleTaskRepository.findByEmployeeId(newEmployee.getId())
+                .orElseGet(() -> {
+                    ScheduleTask s = new ScheduleTask();
+                    s.setEmployee(newEmployee);
+                    s.setTasks(new ArrayList<>());
+                    return s;
+                });
 
-        // Добавляем задачу в новое расписание
         newSchedule.getTasks().add(task);
-
-        // Можно сразу отсортировать по приоритету (опционально)
-        newSchedule.setTasks(new ScheduleTaskService(scheduleTaskRepository, taskRepository, employeeRepository)
-                .sortTasks(newSchedule.getTasks()));
-
-        // Сохраняем новое расписание
+        newSchedule.setTasks(scheduleTaskService.sortTasks(newSchedule.getTasks()));
         scheduleTaskRepository.save(newSchedule);
+
+        return task;
     }
 
+    @Transactional
+    public void delete(Long id) {
+        if (!taskRepository.existsById(id)) {
+            throw new EntityNotFoundException("Task not found with id: " + id);
+        }
+        taskRepository.deleteById(id);
+    }
+
+    @Transactional
     public Task assignTaskToEmployee(long employeeId, Task task) {
         Employee employee = employeeRepository.findById(employeeId)
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Employee not found with id: " + employeeId));
+
         task.setEmployee(employee);
-        ScheduleTask scheduleTask = scheduleTaskRepository.findByEmployeeId(employeeId);
+
+        ScheduleTask scheduleTask = scheduleTaskRepository.findByEmployeeId(employeeId)
+                .orElseGet(() -> {
+                    ScheduleTask s = new ScheduleTask();
+                    s.setEmployee(employee);
+                    s.setTasks(new ArrayList<>());
+                    return s;
+                });
+
         scheduleTask.getTasks().add(task);
+        scheduleTaskRepository.save(scheduleTask);
         return taskRepository.save(task);
     }
 
-    public List<Task> getTasksForEmployee(long employeeId){
+    public List<Task> getTasksForEmployee(long employeeId) {
         return taskRepository.findByEmployeeId(employeeId);
+    }
+
+    /**
+     * Вычисляет и устанавливает приоритет задаче на основе её длительности:
+     * < 1 часа  — HIGH   (срочно)
+     * 1–2 часа  — MEDIUM
+     * > 2 часов — LOW
+     */
+    public void calculatePriority(Task task) {
+        Duration duration = Duration.between(task.getStartTime(), task.getEndTime());
+        if (duration.compareTo(Duration.ofHours(1)) < 0) {
+            task.setPriority(TaskPriority.HIGH);
+        } else if (duration.compareTo(Duration.ofHours(2)) <= 0) {
+            task.setPriority(TaskPriority.MEDIUM);
+        } else {
+            task.setPriority(TaskPriority.LOW);
+        }
+    }
+
+    /**
+     * Сортирует задачи по приоритету — HIGH первым, LOW последним
+     */
+    public void sortTasksByPriority(List<Task> tasks) {
+        tasks.sort((a, b) -> {
+            int pa = a.getPriority() != null ? a.getPriority().getValue() : 0;
+            int pb = b.getPriority() != null ? b.getPriority().getValue() : 0;
+            return Integer.compare(pb, pa);
+        });
     }
 }

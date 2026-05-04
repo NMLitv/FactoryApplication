@@ -3,46 +3,38 @@ package firstproject.factoryapplication.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-
 import java.util.List;
+import lombok.*;
+import java.util.ArrayList;
 
-
-@Setter
 @Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "scheduled_task")
 public class ScheduleTask {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToMany
     @JoinTable(
-            name = "scheduled_task_task", // имя промежуточной таблицы
-            joinColumns = @JoinColumn(name = "scheduled_task_id"), // имя столбца, указывающего на ScheduledTask
-            inverseJoinColumns = @JoinColumn(name = "task_id") // имя столбца, указывающего на Task
+            name = "scheduled_task_task",
+            joinColumns = @JoinColumn(name = "scheduled_task_id"),
+            inverseJoinColumns = @JoinColumn(name = "task_id")
     )
-    private List<Task> tasks;
+    @Builder.Default
+    private List<Task> tasks = new ArrayList<>();
 
     @ManyToOne
+    @JoinColumn(name = "employee_id")
     private Employee employee;
-
-    public ScheduleTask() {
-    }
-
-    public ScheduleTask(Long id, List<Task> tasks, Employee employee) {
-        this.id = id;
-        this.tasks = tasks;
-        this.employee = employee;
-    }
 
     @Override
     public String toString() {
-        return "SheduleTask{" +
-                "id=" + id +
-                ", tasks=" + tasks +
-                ", employee=" + employee +
-                '}';
+        return "ScheduleTask{id=" + id + ", employee=" + employee + "}";
     }
 }
