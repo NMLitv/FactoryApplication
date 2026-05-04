@@ -13,3 +13,4 @@ public interface EquipmentRepository extends JpaRepository<Equipment, Long> {
     List<Equipment> findByStatus(EquipmentStatus status);
     List<Equipment> findByType(EquipmentType type);
 }
+

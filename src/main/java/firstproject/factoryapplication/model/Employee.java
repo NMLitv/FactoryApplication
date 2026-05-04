@@ -50,6 +50,7 @@ public class Employee {
             joinColumns = @JoinColumn(name = "employee_id"),
             inverseJoinColumns = @JoinColumn(name = "shift_id")
     )
+  
     @Builder.Default
     private List<Shift> shifts = new ArrayList<>();
 

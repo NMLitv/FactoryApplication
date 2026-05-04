@@ -56,4 +56,14 @@ public class EquipmentController {
         equipmentService.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/status/{status}")
+    public List<Equipment> getByStatus(@PathVariable String status) {
+        return equipmentService.findByStatus(status);
+    }
+
+    @GetMapping("/type/{type}")
+    public List<Equipment> getByType(@PathVariable String type) {
+        return equipmentService.findByType(type);
+    }
 }
