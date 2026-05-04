@@ -3,13 +3,21 @@ package firstproject.factoryapplication.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-
 import java.util.Arrays;
 import java.util.List;
+import firstproject.factoryapplication.model.enums.EquipmentStatus;
+import firstproject.factoryapplication.model.enums.EquipmentType;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import lombok.*;
+import java.util.ArrayList;
 
-
-@Setter
 @Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "equipment")
 public class Equipment {
@@ -17,36 +25,32 @@ public class Equipment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private double[] location;
+
+    @Column(name = "location_x")
+    private double locationX;
+
+    @Column(name = "location_y")
+    private double locationY;
+
+    @Positive(message = "Capacity must be positive")
     private int capacity;
-    private String status;
-    private String type;
 
+    @NotNull(message = "Status cannot be null")
+    @Enumerated(EnumType.STRING)
+    private EquipmentStatus status;
+
+    @NotNull(message = "Type cannot be null")
+    @Enumerated(EnumType.STRING)
+    private EquipmentType type;
+
+    // @JsonIgnore чтобы не было бесконечной рекурсии при сериализации
     @OneToMany(mappedBy = "equipment", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Task> tasks;
-
-    public Equipment() {
-    }
-
-    public Equipment(Long id, double[] location, int capacity, String status, String type) {
-        this.id = id;
-        this.location = location;
-        this.capacity = capacity;
-        this.status = status;
-        this.type = type;
-    }
-
-
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private List<Task> tasks = new ArrayList<>();
 
     @Override
     public String toString() {
-        return "Equipment{" +
-                "id=" + id +
-                ", location=" + Arrays.toString(location) +
-                ", capacity=" + capacity +
-                ", status='" + status + '\'' +
-                ", type='" + type + '\'' +
-                '}';
+        return "Equipment{id=" + id + ", type=" + type + ", status=" + status + "}";
     }
 }
 

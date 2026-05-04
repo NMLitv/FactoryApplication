@@ -1,52 +1,58 @@
 package firstproject.factoryapplication.controller;
 
-
+import firstproject.factoryapplication.dto.ScheduleTaskDto;
 import firstproject.factoryapplication.model.ScheduleTask;
 import firstproject.factoryapplication.service.ScheduleTaskService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/scheduleTask")
+@RequestMapping("/schedules")
+@RequiredArgsConstructor
 public class ScheduleTaskController {
+
     private final ScheduleTaskService scheduleTaskService;
 
-    public ScheduleTaskController(ScheduleTaskService scheduleTaskService) {
-        this.scheduleTaskService = scheduleTaskService;
-    }
-
     @GetMapping
-    public List<ScheduleTask> findAll(){
-        return scheduleTaskService.findAll();
+    public ResponseEntity<List<ScheduleTask>> getAll() {
+        return ResponseEntity.ok(scheduleTaskService.findAll());
     }
 
-    @GetMapping("{id}")
-    public ScheduleTask getById(@PathVariable long id) {
-        return scheduleTaskService.findById(id);
+    @GetMapping("/{id}")
+    public ResponseEntity<ScheduleTask> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(scheduleTaskService.findById(id));
     }
 
     @GetMapping("/employee/{employeeId}")
-    public void getByEmployeeId(@PathVariable long employeeId) {
-        scheduleTaskService.deleteByEmployeeId(employeeId);
+    public ResponseEntity<ScheduleTask> getByEmployee(@PathVariable Long employeeId) {
+        return ResponseEntity.ok(scheduleTaskService.findByEmployeeId(employeeId));
     }
 
     @PostMapping
-    public void create(@RequestBody ScheduleTask scheduleTask) {
-        scheduleTaskService.create(scheduleTask);
+    public ResponseEntity<ScheduleTask> create(@Valid @RequestBody ScheduleTaskDto dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(scheduleTaskService.create(dto));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ScheduleTask> update(@PathVariable Long id,
+                                               @RequestBody ScheduleTaskDto dto) {
+        return ResponseEntity.ok(scheduleTaskService.update(id, dto));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        scheduleTaskService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/employee/{employeeId}")
-    public void deleteByEmployeeId(@PathVariable long employeeId) {
+    public ResponseEntity<Void> deleteByEmployee(@PathVariable Long employeeId) {
         scheduleTaskService.deleteByEmployeeId(employeeId);
-    }
-
-    @PutMapping("{id}")
-    public void update(
-            @PathVariable long id,
-            @RequestParam long taskId,
-            @RequestParam long EmployeeId
-            ) {
-        scheduleTaskService.update(id, taskId, EmployeeId);
+        return ResponseEntity.noContent().build();
     }
 }
